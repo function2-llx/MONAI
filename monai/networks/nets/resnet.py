@@ -154,7 +154,7 @@ class ResNetBottleneck(nn.Module):
         return out
 
 
-class ResNet(nn.Module):
+class ResNet(UEncoderBase):
     """
     ResNet based on: `Deep Residual Learning for Image Recognition <https://arxiv.org/pdf/1512.03385.pdf>`_
     and `Can Spatiotemporal 3D CNNs Retrace the History of 2D CNNs and ImageNet? <https://arxiv.org/pdf/1711.09577.pdf>`_.
@@ -241,6 +241,7 @@ class ResNet(nn.Module):
         self.layer3 = self._make_layer(block, block_inplanes[2], layers[2], spatial_dims, shortcut_type, stride=2)
         self.layer4 = self._make_layer(block, block_inplanes[3], layers[3], spatial_dims, shortcut_type, stride=2)
         self.avgpool = avgp_type(block_avgpool[spatial_dims])
+        self._cls_feature_size = block_inplanes[3] * block.expansion
         self.fc = nn.Linear(block_inplanes[3] * block.expansion, num_classes) if feed_forward else None
 
         for m in self.modules():
@@ -304,24 +305,35 @@ class ResNet(nn.Module):
         return nn.Sequential(*layers)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
+        out = UEncoderOutput()
         x = self.conv1(x)
         x = self.bn1(x)
         x = self.relu(x)
         if not self.no_max_pool:
             x = self.maxpool(x)
+        out.feature_maps.append(x)
 
         x = self.layer1(x)
+        out.feature_maps.append(x)
         x = self.layer2(x)
+        out.feature_maps.append(x)
         x = self.layer3(x)
+        out.feature_maps.append(x)
         x = self.layer4(x)
+        out.feature_maps.append(x)
 
         x = self.avgpool(x)
 
         x = x.view(x.size(0), -1)
+        out.cls_feature = x
         if self.fc is not None:
             x = self.fc(x)
 
-        return x
+        return out
+
+    @property
+    def cls_feature_size(self) -> int:
+        return self._cls_feature_size
 
 
 def _resnet(
