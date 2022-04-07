@@ -1141,7 +1141,7 @@ def partition_dataset(
     seed: int = 0,
     drop_last: bool = False,
     even_divisible: bool = False,
-):
+) -> list[Sequence]:
     """
     Split the dataset into N partitions. It can support shuffle based on specified random seed.
     Will return a set of datasets, every dataset contains 1 partition of original dataset.
@@ -1252,7 +1252,7 @@ def partition_dataset_classes(
     seed: int = 0,
     drop_last: bool = False,
     even_divisible: bool = False,
-):
+) -> list[Sequence]:
     """
     Split the dataset into N partitions based on the given class labels.
     It can make sure the same ratio of classes in every partition.

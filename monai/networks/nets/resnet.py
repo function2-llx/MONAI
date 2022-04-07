@@ -304,7 +304,7 @@ class ResNet(UEncoderBase):
 
         return nn.Sequential(*layers)
 
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
+    def forward(self, x: torch.Tensor) -> UEncoderOutput:
         out = UEncoderOutput()
         x = self.conv1(x)
         x = self.bn1(x)
