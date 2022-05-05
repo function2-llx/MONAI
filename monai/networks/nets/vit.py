@@ -21,8 +21,9 @@ from monai.networks.blocks.transformerblock import TransformerBlock
 
 __all__ = ["ViT"]
 
+from umei.model import UEncoderBase, UEncoderOutput
 
-class ViT(nn.Module):
+class ViT(UEncoderBase):
     """
     Vision Transformer (ViT), based on: "Dosovitskiy et al.,
     An Image is Worth 16x16 Words: Transformers for Image Recognition at Scale <https://arxiv.org/abs/2010.11929>"
@@ -88,7 +89,7 @@ class ViT(nn.Module):
 
         if hidden_size % num_heads != 0:
             raise ValueError("hidden_size should be divisible by num_heads.")
-
+        self.hidden_size = hidden_size
         self.classification = classification
         self.patch_embedding = PatchEmbeddingBlock(
             in_channels=in_channels,
@@ -107,23 +108,28 @@ class ViT(nn.Module):
             ]
         )
         self.norm = nn.LayerNorm(hidden_size)
+        self.classification_head = None
         if self.classification:
-            self.cls_token = nn.Parameter(torch.zeros(1, 1, hidden_size))
+            # initialize CLS with N(0, 1) instead of zero
+            self.cls_token = nn.Parameter(torch.randn(1, 1, hidden_size))
             if post_activation == "Tanh":
                 self.classification_head = nn.Sequential(nn.Linear(hidden_size, num_classes), nn.Tanh())
             else:
                 self.classification_head = nn.Linear(hidden_size, num_classes)  # type: ignore
 
-    def forward(self, x):
+    def forward(self, x: torch.FloatTensor) -> UEncoderOutput:
         x = self.patch_embedding(x)
-        if hasattr(self, "cls_token"):
-            cls_token = self.cls_token.expand(x.shape[0], -1, -1)
-            x = torch.cat((cls_token, x), dim=1)
+        cls_token = self.cls_token.expand(x.shape[0], -1, -1)
+        x = torch.cat((cls_token, x), dim=1)
         hidden_states_out = []
         for blk in self.blocks:
             x = blk(x)
             hidden_states_out.append(x)
         x = self.norm(x)
-        if hasattr(self, "classification_head"):
+        if self.classification_head is not None:
             x = self.classification_head(x[:, 0])
-        return x, hidden_states_out
+        # TODO: output feature maps (i.e., hidden features of each layer)
+        return UEncoderOutput(x, None)
+
+    def cls_feature_size(self) -> int:
+        return self.hidden_size
