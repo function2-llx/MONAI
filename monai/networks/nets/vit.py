@@ -131,5 +131,6 @@ class ViT(UEncoderBase):
         # TODO: output feature maps (i.e., hidden features of each layer)
         return UEncoderOutput(x, None)
 
+    @property
     def cls_feature_size(self) -> int:
         return self.hidden_size
