@@ -123,7 +123,7 @@ class ViT(UEncoderBase):
         if self.classification_head is not None:
             x = self.classification_head(x[:, 0])
         # TODO: output feature maps (i.e., hidden features of each layer)
-        return UEncoderOutput(x, None)
+        return UEncoderOutput(x[:, 0], None)
 
     @property
     def cls_feature_size(self) -> int:
