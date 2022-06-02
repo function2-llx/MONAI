@@ -311,16 +311,16 @@ class ResNet(UEncoderBase):
         x = self.relu(x)
         if not self.no_max_pool:
             x = self.maxpool(x)
-        out.feature_maps.append(x)
+        out.hidden_states.append(x)
 
         x = self.layer1(x)
-        out.feature_maps.append(x)
+        out.hidden_states.append(x)
         x = self.layer2(x)
-        out.feature_maps.append(x)
+        out.hidden_states.append(x)
         x = self.layer3(x)
-        out.feature_maps.append(x)
+        out.hidden_states.append(x)
         x = self.layer4(x)
-        out.feature_maps.append(x)
+        out.hidden_states.append(x)
 
         x = self.avgpool(x)
 
