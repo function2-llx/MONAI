@@ -21,6 +21,8 @@ import torch.nn.functional as F
 import torch.utils.checkpoint as checkpoint
 from torch.nn import LayerNorm
 
+from umei.model import UEncoderBase, UEncoderOutput, UDecoderBase, UDecoderOutput
+
 from monai.networks.blocks import MLPBlock as Mlp
 from monai.networks.blocks import PatchEmbed, UnetOutBlock, UnetrBasicBlock, UnetrUpBlock
 from monai.networks.layers import DropPath, trunc_normal_
@@ -298,7 +300,7 @@ class SwinUNETR(nn.Module):
             )
 
     def forward(self, x_in):
-        hidden_states_out = self.swinViT(x_in, self.normalize)
+        hidden_states_out = self.swinViT.forward(x_in, self.normalize).hidden_states
         enc0 = self.encoder1(x_in)
         enc1 = self.encoder2(hidden_states_out[0])
         enc2 = self.encoder3(hidden_states_out[1])
@@ -898,13 +900,17 @@ class BasicLayer(nn.Module):
         return x
 
 
-class SwinTransformer(nn.Module):
+class SwinTransformer(UEncoderBase):
     """
     Swin Transformer based on: "Liu et al.,
     Swin Transformer: Hierarchical Vision Transformer using Shifted Windows
     <https://arxiv.org/abs/2103.14030>"
     https://github.com/microsoft/Swin-Transformer
     """
+
+    @property
+    def cls_feature_size(self) -> int:
+        return self.embed_dim * 2 ** 4
 
     def __init__(
         self,
@@ -1054,4 +1060,131 @@ class SwinTransformer(nn.Module):
             x3 = self.layers4c[0](x3.contiguous())
         x4 = self.layers4[0](x3.contiguous())
         x4_out = self.proj_out(x4, normalize)
-        return [x0_out, x1_out, x2_out, x3_out, x4_out]
+        # FIXME: pool x4_out to cls
+        return UEncoderOutput(x4_out, [x0_out, x1_out, x2_out, x3_out, x4_out])
+
+
+class UnetrUp(UDecoderBase):
+    def __init__(
+        self,
+        in_channels: int,
+        feature_size: int,
+        norm_name: Union[Tuple, str] = "instance", spatial_dims: int = 3,
+    ) -> None:
+        super().__init__()
+        self.feature_size = feature_size
+        self.num_layers = 5
+        self.encoder1 = UnetrBasicBlock(
+            spatial_dims=spatial_dims,
+            in_channels=in_channels,
+            out_channels=feature_size,
+            kernel_size=3,
+            stride=1,
+            norm_name=norm_name,
+            res_block=True,
+        )
+
+        self.encoder2 = UnetrBasicBlock(
+            spatial_dims=spatial_dims,
+            in_channels=feature_size,
+            out_channels=feature_size,
+            kernel_size=3,
+            stride=1,
+            norm_name=norm_name,
+            res_block=True,
+        )
+
+        self.encoder3 = UnetrBasicBlock(
+            spatial_dims=spatial_dims,
+            in_channels=2 * feature_size,
+            out_channels=2 * feature_size,
+            kernel_size=3,
+            stride=1,
+            norm_name=norm_name,
+            res_block=True,
+        )
+
+        self.encoder4 = UnetrBasicBlock(
+            spatial_dims=spatial_dims,
+            in_channels=4 * feature_size,
+            out_channels=4 * feature_size,
+            kernel_size=3,
+            stride=1,
+            norm_name=norm_name,
+            res_block=True,
+        )
+
+        self.encoder10 = UnetrBasicBlock(
+            spatial_dims=spatial_dims,
+            in_channels=16 * feature_size,
+            out_channels=16 * feature_size,
+            kernel_size=3,
+            stride=1,
+            norm_name=norm_name,
+            res_block=True,
+        )
+
+        self.decoder5 = UnetrUpBlock(
+            spatial_dims=spatial_dims,
+            in_channels=16 * feature_size,
+            out_channels=8 * feature_size,
+            kernel_size=3,
+            upsample_kernel_size=2,
+            norm_name=norm_name,
+            res_block=True,
+        )
+
+        self.decoder4 = UnetrUpBlock(
+            spatial_dims=spatial_dims,
+            in_channels=feature_size * 8,
+            out_channels=feature_size * 4,
+            kernel_size=3,
+            upsample_kernel_size=2,
+            norm_name=norm_name,
+            res_block=True,
+        )
+
+        self.decoder3 = UnetrUpBlock(
+            spatial_dims=spatial_dims,
+            in_channels=feature_size * 4,
+            out_channels=feature_size * 2,
+            kernel_size=3,
+            upsample_kernel_size=2,
+            norm_name=norm_name,
+            res_block=True,
+        )
+        self.decoder2 = UnetrUpBlock(
+            spatial_dims=spatial_dims,
+            in_channels=feature_size * 2,
+            out_channels=feature_size,
+            kernel_size=3,
+            upsample_kernel_size=2,
+            norm_name=norm_name,
+            res_block=True,
+        )
+
+        self.decoder1 = UnetrUpBlock(
+            spatial_dims=spatial_dims,
+            in_channels=feature_size,
+            out_channels=feature_size,
+            kernel_size=3,
+            upsample_kernel_size=2,
+            norm_name=norm_name,
+            res_block=True,
+        )
+
+    def feature_sizes(self) -> list[int]:
+        return [self.feature_size * 2 ** i for i in reversed(range(self.num_layers))]
+
+    def forward(self, x_in, hidden_states):
+        enc0 = self.encoder1(x_in)
+        enc1 = self.encoder2(hidden_states[0])
+        enc2 = self.encoder3(hidden_states[1])
+        enc3 = self.encoder4(hidden_states[2])
+        dec4 = self.encoder10(hidden_states[4])
+        dec3 = self.decoder5(dec4, hidden_states[3])
+        dec2 = self.decoder4(dec3, enc3)
+        dec1 = self.decoder3(dec2, enc2)
+        dec0 = self.decoder2(dec1, enc1)
+        out = self.decoder1(dec0, enc0)
+        return UDecoderOutput([dec3, dec2, dec1, dec0, out])
