@@ -192,6 +192,7 @@ class ResNet(UEncoderBase):
         conv1_t_size: tuple[int] | int = 7,
         conv1_t_stride: tuple[int] | int = 1,
         no_max_pool: bool = False,
+        layer1_stride: int = 1,
         shortcut_type: str = "B",
         widen_factor: float = 1.0,
         num_classes: int = 400,
@@ -218,7 +219,7 @@ class ResNet(UEncoderBase):
         block_avgpool = get_avgpool()
         block_inplanes = [int(x * widen_factor) for x in block_inplanes]
 
-        self.in_planes = block_inplanes[0]
+        self.in_planes = block_inplanes[0] if in_planes is None else in_planes
         self.no_max_pool = no_max_pool
         self.bias_downsample = bias_downsample
 
@@ -236,7 +237,7 @@ class ResNet(UEncoderBase):
         self.bn1 = norm_type(self.in_planes)
         self.relu = nn.ReLU(inplace=True)
         self.maxpool = pool_type(kernel_size=3, stride=2, padding=1)
-        self.layer1 = self._make_layer(block, block_inplanes[0], layers[0], spatial_dims, shortcut_type)
+        self.layer1 = self._make_layer(block, block_inplanes[0], layers[0], spatial_dims, shortcut_type, stride=layer1_stride)
         self.layer2 = self._make_layer(block, block_inplanes[1], layers[1], spatial_dims, shortcut_type, stride=2)
         self.layer3 = self._make_layer(block, block_inplanes[2], layers[2], spatial_dims, shortcut_type, stride=2)
         self.layer4 = self._make_layer(block, block_inplanes[3], layers[3], spatial_dims, shortcut_type, stride=2)
