@@ -219,7 +219,7 @@ class ResNet(UEncoderBase):
         block_avgpool = get_avgpool()
         block_inplanes = [int(x * widen_factor) for x in block_inplanes]
 
-        self.in_planes = block_inplanes[0] if in_planes is None else in_planes
+        self.in_planes = block_inplanes[0]
         self.no_max_pool = no_max_pool
         self.bias_downsample = bias_downsample
 
