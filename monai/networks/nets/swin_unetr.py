@@ -1060,7 +1060,7 @@ class SwinTransformer(UEncoderBase):
         return UEncoderOutput(x4_out, [x0_out, x1_out, x2_out, x3_out, x4_out])
 
 
-class SwinUnetrDecoder(nn.Module):
+class SwinUnetrDecoder(UDecoderBase):
     def __init__(
         self,
         in_channels: int,
