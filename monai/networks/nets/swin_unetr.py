@@ -25,7 +25,7 @@ from umei.model import UEncoderBase, UEncoderOutput, UDecoderBase, UDecoderOutpu
 
 from monai.networks.blocks import MLPBlock as Mlp
 from monai.networks.blocks import PatchEmbed, UnetOutBlock, UnetrBasicBlock, UnetrUpBlock
-from monai.networks.layers import DropPath, trunc_normal_
+from monai.networks.layers import DropPath, trunc_normal_, Pool
 from monai.utils import ensure_tuple_rep, look_up_option, optional_import
 
 rearrange, _ = optional_import("einops", name="rearrange")
@@ -1021,6 +1021,9 @@ class SwinTransformer(UEncoderBase):
 
         self.num_features = int(embed_dim * 2 ** (self.num_layers - 1))
 
+        pool_type = Pool[Pool.ADAPTIVEAVG, spatial_dims]
+        self.avg_pool = pool_type(1)
+
     def proj_out(self, x, normalize=False):
         if normalize:
             x_shape = x.size()
@@ -1056,9 +1059,7 @@ class SwinTransformer(UEncoderBase):
             x3 = self.layers4c[0](x3.contiguous())
         x4 = self.layers4[0](x3.contiguous())
         x4_out = self.proj_out(x4, normalize)
-        # FIXME: pool x4_out to cls
-        return UEncoderOutput(x4_out, [x0_out, x1_out, x2_out, x3_out, x4_out])
-
+        return UEncoderOutput(self.avg_pool(x4_out).view(x4_out.shape[:2]), [x0_out, x1_out, x2_out, x3_out, x4_out])
 
 class SwinUnetrDecoder(UDecoderBase):
     def __init__(
@@ -1067,6 +1068,7 @@ class SwinUnetrDecoder(UDecoderBase):
         feature_size: int = 24,
         norm_name: Union[Tuple, str] = "instance",
         spatial_dims: int = 3,
+        use_encoder5: bool = False,
     ) -> None:
         super().__init__()
 
@@ -1109,6 +1111,19 @@ class SwinUnetrDecoder(UDecoderBase):
             norm_name=norm_name,
             res_block=True,
         )
+
+        if use_encoder5:
+            self.encoder5 = UnetrBasicBlock(
+                spatial_dims=spatial_dims,
+                in_channels=8 * feature_size,
+                out_channels=8 * feature_size,
+                kernel_size=3,
+                stride=1,
+                norm_name=norm_name,
+                res_block=True,
+            )
+        else:
+            self.encoder5 = None
 
         self.encoder10 = UnetrBasicBlock(
             spatial_dims=spatial_dims,
@@ -1174,8 +1189,11 @@ class SwinUnetrDecoder(UDecoderBase):
         enc1 = self.encoder2(hidden_states_out[0])
         enc2 = self.encoder3(hidden_states_out[1])
         enc3 = self.encoder4(hidden_states_out[2])
+        enc4 = hidden_states_out[3]
+        if self.encoder5 is not None:
+            enc4 = self.encoder5(hidden_states_out[3])
         dec4 = self.encoder10(hidden_states_out[4])
-        dec3 = self.decoder5(dec4, hidden_states_out[3])
+        dec3 = self.decoder5(dec4, enc4)
         dec2 = self.decoder4(dec3, enc3)
         dec1 = self.decoder3(dec2, enc2)
         dec0 = self.decoder2(dec1, enc1)
