@@ -867,8 +867,9 @@ class BasicLayer(nn.Module):
         if callable(self.downsample):
             self.downsample = downsample(dim=dim, norm_layer=norm_layer, spatial_dims=len(self.window_size))
 
-    def forward(self, x):
+    def forward(self, x) -> tuple[torch.Tensor, Optional[torch.Tensor]]:
         x_shape = x.size()
+        x_ds = None
         if len(x_shape) == 5:
             b, c, d, h, w = x_shape
             window_size, shift_size = get_window_size((d, h, w), self.window_size, self.shift_size)
@@ -881,7 +882,8 @@ class BasicLayer(nn.Module):
                 x = blk(x, attn_mask)
             x = x.view(b, d, h, w, -1)
             if self.downsample is not None:
-                x = self.downsample(x)
+                x_ds = self.downsample(x)
+                x_ds = rearrange(x_ds, "b d h w c -> b c d h w")
             x = rearrange(x, "b d h w c -> b c d h w")
 
         elif len(x_shape) == 4:
@@ -895,9 +897,10 @@ class BasicLayer(nn.Module):
                 x = blk(x, attn_mask)
             x = x.view(b, h, w, -1)
             if self.downsample is not None:
-                x = self.downsample(x)
+                x_ds = self.downsample(x)
+                x_ds = rearrange(x_ds, "b h w c -> b c h w")
             x = rearrange(x, "b h w c -> b c h w")
-        return x
+        return x, x_ds
 
 
 class SwinTransformer(UEncoderBase):
