@@ -82,7 +82,7 @@ class UnetrUpBlock(nn.Module):
                 norm_name=norm_name,
             )
 
-    def forward(self, inp: torch.Tensor, skip: Optional[torch.Tensor]):
+    def forward(self, inp: torch.Tensor, skip: Optional[torch.Tensor] = None):
         # number of channels for skip should equals to out_channels
         out = self.transp_conv(inp)
         if self.use_skip:
