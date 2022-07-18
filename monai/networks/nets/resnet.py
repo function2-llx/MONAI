@@ -36,6 +36,8 @@ __all__ = [
     "resnet200",
 ]
 
+from monai.umei import UEncoderBase, UEncoderOutput
+
 
 def get_inplanes():
     return [64, 128, 256, 512]
