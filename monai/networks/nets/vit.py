@@ -21,7 +21,7 @@ from monai.networks.blocks.transformerblock import TransformerBlock
 
 __all__ = ["ViT"]
 
-from umei.model import UEncoderBase, UEncoderOutput
+from monai.umei import UEncoderBase, UEncoderOutput
 
 class ViT(UEncoderBase):
     """

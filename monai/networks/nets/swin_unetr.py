@@ -16,15 +16,14 @@ from collections.abc import Sequence
 
 import numpy as np
 import torch
+from torch.nn import LayerNorm
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.utils.checkpoint as checkpoint
-from torch.nn import LayerNorm
 
 from umei.model import UEncoderBase, UEncoderOutput, UDecoderBase, UDecoderOutput
 
-from monai.networks.blocks import MLPBlock as Mlp
-from monai.networks.blocks import PatchEmbed, UnetOutBlock, UnetrBasicBlock, UnetrUpBlock
+from monai.networks.blocks import MLPBlock as Mlp, PatchEmbed, UnetOutBlock, UnetrBasicBlock, UnetrUpBlock
 from monai.networks.layers import DropPath, trunc_normal_, Pool
 from monai.utils import ensure_tuple_rep, look_up_option, optional_import
 
