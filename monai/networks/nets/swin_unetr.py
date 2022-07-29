@@ -21,8 +21,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.utils.checkpoint as checkpoint
 
-from umei.model import UEncoderBase, UEncoderOutput, UDecoderBase, UDecoderOutput
-
+from monai.umei import UEncoderBase, UEncoderOutput, UDecoderBase, UDecoderOutput
 from monai.networks.blocks import MLPBlock as Mlp, PatchEmbed, UnetOutBlock, UnetrBasicBlock, UnetrUpBlock
 from monai.networks.layers import DropPath, trunc_normal_, Pool
 from monai.utils import ensure_tuple_rep, look_up_option, optional_import
