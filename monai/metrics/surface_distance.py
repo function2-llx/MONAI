@@ -186,7 +186,7 @@ def compute_average_surface_distance(
             continue
         if not np.any(edges_pred):
             warnings.warn(f"the prediction of class {c} is all 0, this may result in nan/inf distance.")
-            asd[b, c] = np.nan
+            asd[b, c] = np.inf
             continue
         surface_distance = get_surface_distance(
             edges_pred, edges_gt, distance_metric=distance_metric, spacing=spacing_list[b]
