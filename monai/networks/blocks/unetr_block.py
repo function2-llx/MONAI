@@ -17,7 +17,7 @@ import torch
 import torch.nn as nn
 
 from monai.networks.blocks.dynunet_block import UnetBasicBlock, UnetResBlock, get_conv_layer
-
+from monai.networks.layers import Act
 
 class UnetrUpBlock(nn.Module):
     """
@@ -249,6 +249,7 @@ class UnetrBasicBlock(nn.Module):
                 kernel_size=kernel_size,
                 stride=stride,
                 norm_name=norm_name,
+                act_name=act_name,
             )
         else:
             self.layer = UnetBasicBlock(  # type: ignore
@@ -258,6 +259,7 @@ class UnetrBasicBlock(nn.Module):
                 kernel_size=kernel_size,
                 stride=stride,
                 norm_name=norm_name,
+                act_name=act_name,
             )
 
     def forward(self, inp):
