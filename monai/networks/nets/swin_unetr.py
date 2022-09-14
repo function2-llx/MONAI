@@ -861,9 +861,10 @@ class BasicLayer(nn.Module):
                 for i in range(depth)
             ]
         )
-        self.downsample = downsample
-        if callable(self.downsample):
+        if inspect.isclass(downsample):
             self.downsample = downsample(dim=dim, norm_layer=norm_layer, spatial_dims=len(self.window_size))
+        else:
+            self.downsample = downsample
 
     def forward(self, x) -> tuple[torch.Tensor, Optional[torch.Tensor]]:
         x_shape = x.size()
