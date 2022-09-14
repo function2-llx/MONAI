@@ -843,6 +843,7 @@ class Lambda(InvertibleTransform):
             raise TypeError(f"func must be None or callable but is {type(func).__name__}.")
         self.func = func
         self.inv_func = inv_func
+        self.track_meta = track_meta
 
     def __call__(self, img: NdarrayOrTensor, func: Callable | None = None):
         """
@@ -860,8 +861,9 @@ class Lambda(InvertibleTransform):
             raise TypeError(f"func must be None or callable but is {type(fn).__name__}.")
         out = fn(img)
         # convert to MetaTensor if necessary
-        if isinstance(out, (np.ndarray, torch.Tensor)) and not isinstance(out, MetaTensor) and get_track_meta():
-            out = MetaTensor(out)
+        if isinstance(out, (np.ndarray, torch.Tensor)) and not isinstance(out, MetaTensor):
+            if self.track_meta and get_track_meta():
+                out = MetaTensor(out)
         if isinstance(out, MetaTensor):
             self.push_transform(out)
         return out
