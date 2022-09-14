@@ -34,7 +34,6 @@ class UnetrUpBlock(nn.Module):
         upsample_kernel_size: Sequence[int] | int,
         norm_name: tuple | str,
         res_block: bool = False,
-        use_skip: bool = True,
     ) -> None:
         """
         Args:
@@ -45,7 +44,6 @@ class UnetrUpBlock(nn.Module):
             upsample_kernel_size: convolution kernel size for transposed convolution layers.
             norm_name: feature normalization type and arguments.
             res_block: bool argument to determine if residual block is used.
-            use_skip: whether to use skip connection from encoder
         """
 
         super().__init__()
@@ -60,9 +58,7 @@ class UnetrUpBlock(nn.Module):
             is_transposed=True,
         )
 
-        self.use_skip = use_skip
-        conv_in = out_channels * 2 if use_skip else out_channels
-
+        conv_in = out_channels * 2
         if res_block:
             self.conv_block = UnetResBlock(
                 spatial_dims,
@@ -85,8 +81,7 @@ class UnetrUpBlock(nn.Module):
     def forward(self, inp: torch.Tensor, skip: Optional[torch.Tensor] = None):
         # number of channels for skip should equals to out_channels
         out = self.transp_conv(inp)
-        if self.use_skip:
-            out = torch.cat((out, skip), dim=1)
+        out = torch.cat((out, skip), dim=1)
         out = self.conv_block(out)
         return out
 
