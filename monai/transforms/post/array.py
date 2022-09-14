@@ -325,7 +325,7 @@ class KeepLargestConnectedComponent(Transform):
         if self.applied_labels is not None:
             applied_labels = self.applied_labels
         else:
-            applied_labels = tuple(get_unique_labels(img, is_onehot, discard=0))
+            applied_labels = tuple(get_unique_labels(img, is_onehot))
         img = convert_to_tensor(img, track_meta=get_track_meta())
         img_: torch.Tensor = convert_to_tensor(img, track_meta=False)
         if self.independent:
