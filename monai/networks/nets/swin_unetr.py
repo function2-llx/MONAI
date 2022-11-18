@@ -899,6 +899,8 @@ class BasicLayer(nn.Module):
                 x_ds = self.downsample(x)
                 x_ds = rearrange(x_ds, "b h w c -> b c h w")
             x = rearrange(x, "b h w c -> b c h w")
+        if x_ds is None:
+            return x
         return x, x_ds
 
 
