@@ -20,5 +20,5 @@ class UDecoderOutput:
     feature_maps: list[torch.Tensor]
 
 class UDecoderBase(nn.Module):
-    def forward(self, encoder_hidden_states: list[torch.Tensor], img: torch.Tensor) -> UDecoderOutput:
+    def forward(self, encoder_hidden_states: list[torch.Tensor], *args) -> UDecoderOutput:
         raise not NotImplementedError
