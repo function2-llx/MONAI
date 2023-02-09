@@ -21,7 +21,7 @@ from monai.networks.blocks.transformerblock import TransformerBlock
 
 __all__ = ["ViT"]
 
-from monai.umei import UEncoderBase, UEncoderOutput
+from monai.umei import UEncoderBase, BackboneOutput
 
 class ViT(UEncoderBase):
     """
@@ -111,7 +111,7 @@ class ViT(UEncoderBase):
             else:
                 self.classification_head = nn.Linear(hidden_size, num_classes)  # type: ignore
 
-    def forward(self, x: torch.FloatTensor) -> UEncoderOutput:
+    def forward(self, x: torch.FloatTensor) -> BackboneOutput:
         x = self.patch_embedding(x)
         cls_token = self.cls_token.expand(x.shape[0], -1, -1)
         x = torch.cat((cls_token, x), dim=1)
@@ -123,4 +123,4 @@ class ViT(UEncoderBase):
         if self.classification_head is not None:
             x = self.classification_head(x[:, 0])
         # TODO: output feature maps (i.e., hidden features of each layer)
-        return UEncoderOutput(x[:, 0], hidden_states_out)
+        return BackboneOutput(x[:, 0], hidden_states_out)

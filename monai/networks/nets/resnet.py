@@ -36,7 +36,7 @@ __all__ = [
     "resnet200",
 ]
 
-from monai.umei import UEncoderBase, UEncoderOutput
+from monai.umei import UEncoderBase, BackboneOutput
 
 
 def get_inplanes():
@@ -307,8 +307,8 @@ class ResNet(UEncoderBase):
 
         return nn.Sequential(*layers)
 
-    def forward(self, x: torch.Tensor) -> UEncoderOutput:
-        out = UEncoderOutput()
+    def forward(self, x: torch.Tensor) -> BackboneOutput:
+        out = BackboneOutput()
         x = self.conv1(x)
         x = self.bn1(x)
         x = self.relu(x)

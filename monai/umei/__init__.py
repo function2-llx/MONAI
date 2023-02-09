@@ -6,12 +6,12 @@ import torch
 from torch import nn
 
 @dataclass
-class UEncoderOutput:
+class BackboneOutput:
     cls_feature: torch.Tensor = None
     hidden_states: list[torch.Tensor] = field(default_factory=list)
 
 class UEncoderBase(nn.Module):
-    def forward(self, img: torch.Tensor, *args, **kwargs) -> UEncoderOutput:
+    def forward(self, img: torch.Tensor, *args, **kwargs) -> BackboneOutput:
         raise NotImplementedError
 
 @dataclass
