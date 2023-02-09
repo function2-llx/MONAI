@@ -21,7 +21,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.utils.checkpoint as checkpoint
 
-from monai.umei import UEncoderBase, UEncoderOutput, UDecoderBase, UDecoderOutput
+from monai.umei import UEncoderBase, BackboneOutput, UDecoderBase, UDecoderOutput
 from monai.networks.blocks import MLPBlock as Mlp, PatchEmbed, UnetOutBlock, UnetrBasicBlock, UnetrUpBlock
 from monai.networks.layers import DropPath, trunc_normal_, Pool
 from monai.utils import ensure_tuple_rep, look_up_option, optional_import
@@ -1063,7 +1063,7 @@ class SwinTransformer(UEncoderBase):
             x3 = self.layers4c[0](x3.contiguous())
         x4 = self.layers4[0](x3.contiguous())
         x4_out = self.proj_out(x4, normalize)
-        return UEncoderOutput(self.avg_pool(x4_out).view(x4_out.shape[:2]), [x0_out, x1_out, x2_out, x3_out, x4_out])
+        return BackboneOutput(self.avg_pool(x4_out).view(x4_out.shape[:2]), [x0_out, x1_out, x2_out, x3_out, x4_out])
 
 class SwinUnetrDecoder(UDecoderBase):
     def __init__(
