@@ -36,7 +36,7 @@ __all__ = [
     "resnet200",
 ]
 
-from monai.umei import UEncoderBase, BackboneOutput
+from monai.umei import Backbone, BackboneOutput
 
 
 def get_inplanes():
@@ -156,7 +156,7 @@ class ResNetBottleneck(nn.Module):
         return out
 
 
-class ResNet(UEncoderBase):
+class ResNet(Backbone):
     """
     ResNet based on: `Deep Residual Learning for Image Recognition <https://arxiv.org/pdf/1512.03385.pdf>`_
     and `Can Spatiotemporal 3D CNNs Retrace the History of 2D CNNs and ImageNet? <https://arxiv.org/pdf/1711.09577.pdf>`_.
@@ -314,16 +314,16 @@ class ResNet(UEncoderBase):
         x = self.relu(x)
         if not self.no_max_pool:
             x = self.maxpool(x)
-        out.hidden_states.append(x)
+        out.feature_maps.append(x)
 
         x = self.layer1(x)
-        out.hidden_states.append(x)
+        out.feature_maps.append(x)
         x = self.layer2(x)
-        out.hidden_states.append(x)
+        out.feature_maps.append(x)
         x = self.layer3(x)
-        out.hidden_states.append(x)
+        out.feature_maps.append(x)
         x = self.layer4(x)
-        out.hidden_states.append(x)
+        out.feature_maps.append(x)
 
         x = self.avgpool(x)
 
