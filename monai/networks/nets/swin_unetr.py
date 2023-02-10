@@ -11,6 +11,7 @@
 
 from __future__ import annotations
 
+import inspect
 import itertools
 from collections.abc import Sequence
 
@@ -21,7 +22,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.utils.checkpoint as checkpoint
 
-from monai.umei import UEncoderBase, BackboneOutput, UDecoderBase, UDecoderOutput
+from monai.umei import Backbone, BackboneOutput, Decoder, DecoderOutput
 from monai.networks.blocks import MLPBlock as Mlp, PatchEmbed, UnetOutBlock, UnetrBasicBlock, UnetrUpBlock
 from monai.networks.layers import DropPath, trunc_normal_, Pool
 from monai.utils import ensure_tuple_rep, look_up_option, optional_import
@@ -298,7 +299,7 @@ class SwinUNETR(nn.Module):
             )
 
     def forward(self, x_in):
-        hidden_states_out = self.swinViT.forward(x_in, self.normalize).hidden_states
+        hidden_states_out = self.swinViT.forward(x_in, self.normalize).feature_maps
         enc0 = self.encoder1(x_in)
         enc1 = self.encoder2(hidden_states_out[0])
         enc2 = self.encoder3(hidden_states_out[1])
@@ -904,7 +905,7 @@ class BasicLayer(nn.Module):
         return x, x_ds
 
 
-class SwinTransformer(UEncoderBase):
+class SwinTransformer(Backbone):
     """
     Swin Transformer based on: "Liu et al.,
     Swin Transformer: Hierarchical Vision Transformer using Shifted Windows
@@ -1065,7 +1066,7 @@ class SwinTransformer(UEncoderBase):
         x4_out = self.proj_out(x4, normalize)
         return BackboneOutput(self.avg_pool(x4_out).view(x4_out.shape[:2]), [x0_out, x1_out, x2_out, x3_out, x4_out])
 
-class SwinUnetrDecoder(UDecoderBase):
+class SwinUnetrDecoder(Decoder):
     def __init__(
         self,
         in_channels: int,
@@ -1202,4 +1203,4 @@ class SwinUnetrDecoder(UDecoderBase):
         dec1 = self.decoder3(dec2, enc2)
         dec0 = self.decoder2(dec1, enc1)
         out = self.decoder1(dec0, enc0)
-        return UDecoderOutput([dec3, dec2, dec1, dec0, out])
+        return DecoderOutput([dec3, dec2, dec1, dec0, out])
