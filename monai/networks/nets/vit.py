@@ -21,9 +21,9 @@ from monai.networks.blocks.transformerblock import TransformerBlock
 
 __all__ = ["ViT"]
 
-from monai.umei import UEncoderBase, BackboneOutput
+from monai.umei import Backbone, BackboneOutput
 
-class ViT(UEncoderBase):
+class ViT(Backbone):
     """
     Vision Transformer (ViT), based on: "Dosovitskiy et al.,
     An Image is Worth 16x16 Words: Transformers for Image Recognition at Scale <https://arxiv.org/abs/2010.11929>"

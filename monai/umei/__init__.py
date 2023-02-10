@@ -7,18 +7,18 @@ from torch import nn
 
 @dataclass
 class BackboneOutput:
-    cls_feature: torch.Tensor = None
-    hidden_states: list[torch.Tensor] = field(default_factory=list)
+    cls_feature: torch.Tensor = field(default=None)
+    feature_maps: list[torch.Tensor] = field(default_factory=list)
 
-class UEncoderBase(nn.Module):
+class Backbone(nn.Module):
     def forward(self, img: torch.Tensor, *args, **kwargs) -> BackboneOutput:
         raise NotImplementedError
 
 @dataclass
-class UDecoderOutput:
+class DecoderOutput:
     # low->high resolution
     feature_maps: list[torch.Tensor]
 
-class UDecoderBase(nn.Module):
-    def forward(self, encoder_hidden_states: list[torch.Tensor], *args) -> UDecoderOutput:
+class Decoder(nn.Module):
+    def forward(self, encoder_hidden_states: list[torch.Tensor], *args) -> DecoderOutput:
         raise not NotImplementedError
