@@ -20,5 +20,5 @@ class DecoderOutput:
     feature_maps: list[torch.Tensor]
 
 class Decoder(nn.Module):
-    def forward(self, encoder_hidden_states: list[torch.Tensor], *args) -> DecoderOutput:
+    def forward(self, backbone_feature_maps: list[torch.Tensor], x_in) -> DecoderOutput:
         raise not NotImplementedError
