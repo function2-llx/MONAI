@@ -45,3 +45,6 @@ class DropPath(nn.Module):
 
     def forward(self, x):
         return self.drop_path(x, self.drop_prob, self.training, self.scale_by_keep)
+
+    def extra_repr(self) -> str:
+        return f'drop_prob={self.drop_prob:.3f}, scale_by_keep={self.scale_by_keep}'

@@ -11,6 +11,8 @@
 
 from __future__ import annotations
 
+import warnings
+
 import torch.nn
 
 from monai.networks.layers.factories import Act, Dropout, Norm, Pool, split_args
@@ -49,6 +51,9 @@ def get_norm_layer(name: tuple | str, spatial_dims: int | None = 1, channels: in
         kw_args["num_channels"] = channels
     if has_option(norm_type, "normalized_shape") and "normalized_shape" not in kw_args:
         kw_args["normalized_shape"] = channels
+    if has_option(norm_type, "affine") and "affine" not in kw_args:
+        kw_args["affine"] = True
+        warnings.warn(f'set affine to True for {norm_name}')
     return norm_type(**kw_args)
 
 
