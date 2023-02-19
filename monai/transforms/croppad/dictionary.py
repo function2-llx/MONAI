@@ -727,7 +727,7 @@ class CropForegroundd(Cropd):
         self,
         keys: KeysCollection,
         source_key: str,
-        select_fn: Callable = is_positive,
+        select_fn: Callable | str = is_positive,
         channel_indices: IndexSelection | None = None,
         margin: Sequence[int] | int = 0,
         allow_smaller: bool = True,
