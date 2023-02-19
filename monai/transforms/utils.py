@@ -949,7 +949,7 @@ def _create_translate(
 @deprecated_arg_default("allow_smaller", old_default=True, new_default=False, since="1.2", replaced="1.3")
 def generate_spatial_bounding_box(
     img: NdarrayOrTensor,
-    select_fn: Callable = is_positive,
+    select_fn: Callable | str = is_positive,
     channel_indices: IndexSelection | None = None,
     margin: Sequence[int] | int = 0,
     allow_smaller: bool = True,
@@ -979,6 +979,10 @@ def generate_spatial_bounding_box(
     check_non_lazy_pending_ops(img, name="generate_spatial_bounding_box")
     spatial_size = img.shape[1:]
     data = img[list(ensure_tuple(channel_indices))] if channel_indices is not None else img
+    if select_fn == 'min':
+        min_v = img.min()
+        # make PEP 8: E731 happy
+        def select_fn(x): return x > min_v
     data = select_fn(data).any(0)
     ndim = len(data.shape)
     margin = ensure_tuple_rep(margin, ndim)
