@@ -793,9 +793,13 @@ class NormalizeIntensityd(MapTransform):
         allow_missing_keys: bool = False,
         *,
         set_zero_to_min: bool = False,
+        non_min: bool = False,
     ) -> None:
         super().__init__(keys, allow_missing_keys)
-        self.normalizer = NormalizeIntensity(subtrahend, divisor, nonzero, channel_wise, dtype, set_zero_to_min=set_zero_to_min)
+        self.normalizer = NormalizeIntensity(
+            subtrahend, divisor, nonzero, channel_wise, dtype,
+            set_zero_to_min=set_zero_to_min, non_min=non_min,
+        )
 
     def __call__(self, data: Mapping[Hashable, NdarrayOrTensor]) -> dict[Hashable, NdarrayOrTensor]:
         d = dict(data)
