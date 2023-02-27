@@ -574,6 +574,11 @@ def generate_label_classes_crop_centers(
             if warn:
                 warnings.warn(f"no available indices of class {i} to crop, set the crop ratio of this class to zero.")
 
+    # fall back to random crop
+    if not np.any(ratios_):
+        for i, array in enumerate(indices):
+            ratios_[i] = len(array)
+
     centers = []
     classes = rand_state.choice(len(ratios_), size=num_samples, p=np.asarray(ratios_) / np.sum(ratios_))
     for i in classes:
