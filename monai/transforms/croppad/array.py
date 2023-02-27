@@ -113,12 +113,14 @@ class Pad(InvertibleTransform, LazyTransform):
         to_pad: tuple[tuple[int, int]] | None = None,
         mode: str = PytorchPadMode.CONSTANT,
         lazy: bool = False,
+        pad_min: bool = False,
         **kwargs,
     ) -> None:
         LazyTransform.__init__(self, lazy)
         self.to_pad = to_pad
         self.mode = mode
         self.kwargs = kwargs
+        self.pad_min = pad_min
 
     def compute_pad_width(self, spatial_shape: Sequence[int]) -> tuple[tuple[int, int]]:
         """
@@ -161,6 +163,8 @@ class Pad(InvertibleTransform, LazyTransform):
             to_pad_ = self.compute_pad_width(spatial_shape)
         mode_ = self.mode if mode is None else mode
         kwargs_ = dict(self.kwargs)
+        if self.pad_min and 'value' not in kwargs_:
+            kwargs_['value'] = img.min().item()
         kwargs_.update(kwargs)
 
         img_t = convert_to_tensor(data=img, track_meta=get_track_meta())
@@ -277,7 +281,7 @@ class BorderPad(Pad):
 
     def compute_pad_width(self, spatial_shape: Sequence[int]) -> tuple[tuple[int, int]]:
         spatial_border = ensure_tuple(self.spatial_border)
-        if not all(isinstance(b, int) for b in spatial_border):
+        if not all(isinstance(b, (int, np.integer)) for b in spatial_border):
             raise ValueError(f"self.spatial_border must contain only ints, got {spatial_border}.")
         spatial_border = tuple(max(0, b) for b in spatial_border)
 

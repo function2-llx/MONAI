@@ -813,12 +813,15 @@ class NormalizeIntensity(Transform):
         nonzero: bool = False,
         channel_wise: bool = False,
         dtype: DtypeLike = np.float32,
+        *,
+        set_zero_to_min: bool = False,
     ) -> None:
         self.subtrahend = subtrahend
         self.divisor = divisor
         self.nonzero = nonzero
         self.channel_wise = channel_wise
         self.dtype = dtype
+        self.set_zero_to_min = set_zero_to_min
 
     @staticmethod
     def _mean(x):
@@ -862,6 +865,8 @@ class NormalizeIntensity(Transform):
             _div[_div == 0.0] = 1.0
 
         img[slices] = (img[slices] - _sub) / _div
+        if self.set_zero_to_min:
+            img[~slices] = img[slices].min()
         return img
 
     def __call__(self, img: NdarrayOrTensor) -> NdarrayOrTensor:

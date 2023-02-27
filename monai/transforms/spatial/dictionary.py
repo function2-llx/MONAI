@@ -1010,9 +1010,11 @@ class RandAffined(RandomizableTransform, MapTransform, InvertibleTransform, Lazy
         spatial_size: Sequence[int] | int | None = None,
         prob: float = 0.1,
         rotate_range: Sequence[tuple[float, float] | float] | float | None = None,
+        rotate_prob: float = 1.,
         shear_range: Sequence[tuple[float, float] | float] | float | None = None,
         translate_range: Sequence[tuple[float, float] | float] | float | None = None,
         scale_range: Sequence[tuple[float, float] | float] | float | None = None,
+        scale_prob: float = 1.,
         mode: SequenceStr = GridSampleMode.BILINEAR,
         padding_mode: SequenceStr = GridSamplePadMode.REFLECTION,
         cache_grid: bool = False,
@@ -1086,9 +1088,11 @@ class RandAffined(RandomizableTransform, MapTransform, InvertibleTransform, Lazy
         self.rand_affine = RandAffine(
             prob=1.0,  # because probability handled in this class
             rotate_range=rotate_range,
+            rotate_prob=rotate_prob,
             shear_range=shear_range,
             translate_range=translate_range,
             scale_range=scale_range,
+            scale_prob=scale_prob,
             spatial_size=spatial_size,
             cache_grid=cache_grid,
             device=device,
