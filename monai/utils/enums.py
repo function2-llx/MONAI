@@ -522,7 +522,7 @@ class SpaceKeys(StrEnum):
     LPS = "LPS"
 
 
-class MetaKeys(StrEnum):
+class MetaKeys:
     """
     Typical keys for MetaObj.meta
     """

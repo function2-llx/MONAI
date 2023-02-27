@@ -113,7 +113,8 @@ __all__ = [
     "Rand3DElastic",
 ]
 
-RandRange = Optional[Union[Sequence[Union[Tuple[float, float], float]], float]]
+# RandRange = Optional[Union[Sequence[Union[Tuple[float, float], float]], float]]
+RandRange = Sequence[tuple[float, float] | float] | float | None
 
 
 class SpatialResample(InvertibleTransform, LazyTransform):
@@ -1797,9 +1798,11 @@ class RandAffineGrid(Randomizable, LazyTransform):
     def __init__(
         self,
         rotate_range: RandRange = None,
+        rotate_prob: float = 1.,
         shear_range: RandRange = None,
         translate_range: RandRange = None,
         scale_range: RandRange = None,
+        scale_prob: float = 1.,
         device: torch.device | None = None,
         dtype: DtypeLike = np.float32,
         lazy: bool = False,
@@ -1843,9 +1846,11 @@ class RandAffineGrid(Randomizable, LazyTransform):
         """
         LazyTransform.__init__(self, lazy=lazy)
         self.rotate_range = ensure_tuple(rotate_range)
+        self.rotate_prob = rotate_prob
         self.shear_range = ensure_tuple(shear_range)
         self.translate_range = ensure_tuple(translate_range)
         self.scale_range = ensure_tuple(scale_range)
+        self.scale_prob = scale_prob
 
         self.rotate_params: list[float] | None = None
         self.shear_params: list[float] | None = None
@@ -1856,7 +1861,10 @@ class RandAffineGrid(Randomizable, LazyTransform):
         self.dtype = dtype
         self.affine: torch.Tensor | None = torch.eye(4, dtype=torch.float64)
 
-    def _get_rand_param(self, param_range, add_scalar: float = 0.0):
+    def _get_rand_param(self, param_range, add_scalar: float = 0.0, prob: float = 1.):
+        if self.R.uniform() >= prob:
+            return None
+
         out_param = []
         for f in param_range:
             if issequenceiterable(f):
@@ -1868,10 +1876,10 @@ class RandAffineGrid(Randomizable, LazyTransform):
         return out_param
 
     def randomize(self, data: Any | None = None) -> None:
-        self.rotate_params = self._get_rand_param(self.rotate_range)
+        self.rotate_params = self._get_rand_param(self.rotate_range, prob=self.rotate_prob)
         self.shear_params = self._get_rand_param(self.shear_range)
         self.translate_params = self._get_rand_param(self.translate_range)
-        self.scale_params = self._get_rand_param(self.scale_range, 1.0)
+        self.scale_params = self._get_rand_param(self.scale_range, 1.0, self.scale_prob)
 
     def __call__(
         self,
@@ -1971,6 +1979,8 @@ class Resample(Transform):
         device: torch.device | None = None,
         align_corners: bool = False,
         dtype: DtypeLike = np.float64,
+        *,
+        shift_min: bool = True,
     ) -> None:
         """
         computes output image using values from `img`, locations from `grid` using pytorch.
@@ -2012,6 +2022,7 @@ class Resample(Transform):
         self.device = device
         self.align_corners = align_corners
         self.dtype = dtype
+        self.shift_min = shift_min
 
     def __call__(
         self,
@@ -2107,6 +2118,9 @@ class Resample(Transform):
             if self.norm_coords:
                 for i, dim in enumerate(img_t.shape[sr + 1 : 0 : -1]):
                     grid_t[0, ..., i] *= 2.0 / max(2, dim)
+            if _padding_mode == GridSamplePadMode.ZEROS and self.shift_min:
+                min_v = img_t.min()
+                img_t -= min_v
             out = torch.nn.functional.grid_sample(
                 img_t.unsqueeze(0),
                 grid_t,
@@ -2114,6 +2128,8 @@ class Resample(Transform):
                 padding_mode=_padding_mode,
                 align_corners=None if _align_corners == TraceKeys.NONE else _align_corners,  # type: ignore
             )[0]
+            if _padding_mode == GridSamplePadMode.ZEROS and self.shift_min:
+                out += min_v
         out_val, *_ = convert_to_dst_type(out, dst=img, dtype=np.float32)
         return out_val
 
@@ -2330,9 +2346,11 @@ class RandAffine(RandomizableTransform, InvertibleTransform, LazyTransform):
         self,
         prob: float = 0.1,
         rotate_range: RandRange = None,
+        rotate_prob: float = 1.,
         shear_range: RandRange = None,
         translate_range: RandRange = None,
         scale_range: RandRange = None,
+        scale_prob: float = 1.,
         spatial_size: Sequence[int] | int | None = None,
         mode: str | int = GridSampleMode.BILINEAR,
         padding_mode: str = GridSamplePadMode.REFLECTION,
@@ -2400,9 +2418,11 @@ class RandAffine(RandomizableTransform, InvertibleTransform, LazyTransform):
         LazyTransform.__init__(self, lazy=lazy)
         self.rand_affine_grid = RandAffineGrid(
             rotate_range=rotate_range,
+            rotate_prob=rotate_prob,
             shear_range=shear_range,
             translate_range=translate_range,
             scale_range=scale_range,
+            scale_prob=scale_prob,
             device=device,
             lazy=lazy,
         )
