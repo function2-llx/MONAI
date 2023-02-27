@@ -634,12 +634,15 @@ class NormalizeIntensity(Transform):
         nonzero: bool = False,
         channel_wise: bool = False,
         dtype: DtypeLike = np.float32,
+        *,
+        set_zero_to_min: bool = False,
     ) -> None:
         self.subtrahend = subtrahend
         self.divisor = divisor
         self.nonzero = nonzero
         self.channel_wise = channel_wise
         self.dtype = dtype
+        self.set_zero_to_min = set_zero_to_min
 
     @staticmethod
     def _mean(x):
@@ -683,6 +686,8 @@ class NormalizeIntensity(Transform):
             _div[_div == 0.0] = 1.0
 
         img[slices] = (img[slices] - _sub) / _div
+        if self.set_zero_to_min:
+            img[~slices] = img[slices].min()
         return img
 
     def __call__(self, img: NdarrayOrTensor) -> NdarrayOrTensor:
@@ -810,16 +815,19 @@ class AdjustContrast(Transform):
 
     backend = [TransformBackends.TORCH, TransformBackends.NUMPY]
 
-    def __init__(self, gamma: float) -> None:
+    def __init__(self, gamma: float, invert: bool = False) -> None:
         if not isinstance(gamma, (int, float)):
             raise ValueError(f"gamma must be a float or int number, got {type(gamma)} {gamma}.")
         self.gamma = gamma
+        self.invert = invert
 
     def __call__(self, img: NdarrayOrTensor) -> NdarrayOrTensor:
         """
         Apply the transform to `img`.
         """
         img = convert_to_tensor(img, track_meta=get_track_meta())
+        if self.invert:
+            img = -img
         epsilon = 1e-7
         img_min = img.min()
         img_range = img.max() - img_min
@@ -841,7 +849,7 @@ class RandAdjustContrast(RandomizableTransform):
 
     backend = AdjustContrast.backend
 
-    def __init__(self, prob: float = 0.1, gamma: Sequence[float] | float = (0.5, 4.5)) -> None:
+    def __init__(self, prob: float = 0.1, gamma: Sequence[float] | float = (0.5, 4.5), invert_prob: float = 0.5) -> None:
         RandomizableTransform.__init__(self, prob)
 
         if isinstance(gamma, (int, float)):
@@ -856,12 +864,15 @@ class RandAdjustContrast(RandomizableTransform):
             self.gamma = (min(gamma), max(gamma))
 
         self.gamma_value: float | None = None
+        self.invert_prob = invert_prob
+        self.invert = False
 
     def randomize(self, data: Any | None = None) -> None:
         super().randomize(None)
         if not self._do_transform:
             return None
         self.gamma_value = self.R.uniform(low=self.gamma[0], high=self.gamma[1])
+        self.invert = self.R.uniform() < self.invert_prob
 
     def __call__(self, img: NdarrayOrTensor, randomize: bool = True) -> NdarrayOrTensor:
         """
