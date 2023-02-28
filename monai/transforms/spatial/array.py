@@ -2161,6 +2161,8 @@ class Affine(InvertibleTransform, LazyTransform):
         align_corners: bool = False,
         image_only: bool = False,
         lazy: bool = False,
+        *,
+        shift_min: bool = True,
     ) -> None:
         """
         The affine transformations are applied in rotate, shear, translate, scale order.
@@ -2232,7 +2234,7 @@ class Affine(InvertibleTransform, LazyTransform):
         )
         self.image_only = image_only
         self.norm_coord = not normalized
-        self.resampler = Resample(norm_coords=self.norm_coord, device=device, dtype=dtype, align_corners=align_corners)
+        self.resampler = Resample(norm_coords=self.norm_coord, device=device, dtype=dtype, align_corners=align_corners, shift_min=shift_min)
         self.spatial_size = spatial_size
         self.mode = mode
         self.padding_mode: str = padding_mode
