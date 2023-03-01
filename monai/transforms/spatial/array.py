@@ -2171,8 +2171,6 @@ class RandAffine(RandomizableTransform, InvertibleTransform, LazyTransform):
         padding_mode: str = GridSamplePadMode.REFLECTION,
         cache_grid: bool = False,
         device: torch.device | None = None,
-        *,
-        use_patch_size: bool = False,
     ) -> None:
         """
         Args:
