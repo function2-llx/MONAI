@@ -142,7 +142,7 @@ def is_immutable(obj: Any) -> bool:
     return isinstance(obj, (type(None), int, float, bool, complex, str, tuple, bytes, type, range, slice))
 
 
-def ensure_tuple(vals: Any, wrap_array: bool = False) -> tuple:
+def ensure_tuple(vals: Iterable[T] | T, wrap_array: bool = False) -> tuple[T, ...]:
     """
     Returns a tuple of `vals`.
 
@@ -170,7 +170,7 @@ def ensure_tuple_size(vals: Any, dim: int, pad_val: Any = 0, pad_from_start: boo
     return tup + (pad_val,) * pad_dim
 
 
-def ensure_tuple_rep(tup: Any, dim: int) -> tuple[Any, ...]:
+def ensure_tuple_rep(tup: Iterable[T] | T, dim: int) -> tuple[T, ...]:
     """
     Returns a copy of `tup` with `dim` values by either shortened or duplicated input.
 
