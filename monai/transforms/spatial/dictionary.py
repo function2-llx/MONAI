@@ -888,6 +888,8 @@ class Affined(MapTransform, InvertibleTransform, LazyTransform):
         align_corners: bool = False,
         allow_missing_keys: bool = False,
         lazy: bool = False,
+        *,
+        shift_min: bool = True,
     ) -> None:
         """
         Args:
@@ -959,6 +961,7 @@ class Affined(MapTransform, InvertibleTransform, LazyTransform):
             dtype=dtype,  # type: ignore
             align_corners=align_corners,
             lazy=lazy,
+            shift_min=shift_min,
         )
         self.mode = ensure_tuple_rep(mode, len(self.keys))
         self.padding_mode = ensure_tuple_rep(padding_mode, len(self.keys))
