@@ -722,6 +722,8 @@ class Affined(MapTransform, InvertibleTransform, LazyTransform):
         dtype: DtypeLike | torch.dtype = np.float32,
         align_corners: bool = False,
         allow_missing_keys: bool = False,
+        *,
+        shift_min: bool = True,
     ) -> None:
         """
         Args:
@@ -789,6 +791,7 @@ class Affined(MapTransform, InvertibleTransform, LazyTransform):
             device=device,
             dtype=dtype,  # type: ignore
             align_corners=align_corners,
+            shift_min=shift_min,
         )
         self.mode = ensure_tuple_rep(mode, len(self.keys))
         self.padding_mode = ensure_tuple_rep(padding_mode, len(self.keys))

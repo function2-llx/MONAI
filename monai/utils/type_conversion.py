@@ -150,6 +150,7 @@ def convert_to_tensor(
     dtype = get_equivalent_dtype(dtype, torch.Tensor)
     if isinstance(data, torch.Tensor):
         return _convert_tensor(data).to(dtype=dtype, device=device, memory_format=torch.contiguous_format)
+    from omegaconf import ListConfig, DictConfig
     if isinstance(data, np.ndarray):
         # skip array of string classes and object, refer to:
         # https://github.com/pytorch/pytorch/blob/v1.9.0/torch/utils/data/_utils/collate.py#L13
@@ -161,13 +162,13 @@ def convert_to_tensor(
             return _convert_tensor(data, dtype=dtype, device=device)
     elif (has_cp and isinstance(data, cp_ndarray)) or isinstance(data, (float, int, bool)):
         return _convert_tensor(data, dtype=dtype, device=device)
-    elif isinstance(data, list):
+    elif isinstance(data, (list, ListConfig)):
         list_ret = [convert_to_tensor(i, dtype=dtype, device=device, track_meta=track_meta) for i in data]
         return _convert_tensor(list_ret, dtype=dtype, device=device) if wrap_sequence else list_ret
     elif isinstance(data, tuple):
         tuple_ret = tuple(convert_to_tensor(i, dtype=dtype, device=device, track_meta=track_meta) for i in data)
         return _convert_tensor(tuple_ret, dtype=dtype, device=device) if wrap_sequence else tuple_ret
-    elif isinstance(data, dict):
+    elif isinstance(data, (dict, DictConfig)):
         return {k: convert_to_tensor(v, dtype=dtype, device=device, track_meta=track_meta) for k, v in data.items()}
 
     return data
