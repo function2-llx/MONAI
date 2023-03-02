@@ -1192,12 +1192,13 @@ class RandGaussianSmoothd(RandomizableTransform, MapTransform):
         sigma_z: tuple[float, float] = (0.25, 1.5),
         approx: str = "erf",
         prob: float = 0.1,
+        isotropic_prob: float = 1.,
         allow_missing_keys: bool = False,
     ) -> None:
         MapTransform.__init__(self, keys, allow_missing_keys)
         RandomizableTransform.__init__(self, prob)
         self.rand_smooth = RandGaussianSmooth(
-            sigma_x=sigma_x, sigma_y=sigma_y, sigma_z=sigma_z, approx=approx, prob=1.0
+            sigma_x=sigma_x, sigma_y=sigma_y, sigma_z=sigma_z, approx=approx, prob=1.0, isotropic_prob=isotropic_prob,
         )
 
     def set_random_state(

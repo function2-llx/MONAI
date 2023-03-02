@@ -794,15 +794,12 @@ class NormalizeIntensity(Transform):
         dtype: DtypeLike = np.float32,
         *,
         set_zero_to_min: bool = False,
-        non_min: bool = False,
     ) -> None:
         self.subtrahend = subtrahend
         self.divisor = divisor
         self.nonzero = nonzero
         self.channel_wise = channel_wise
         self.dtype = dtype
-        assert not (non_min and nonzero)
-        self.non_min = non_min
         self.set_zero_to_min = set_zero_to_min
 
     @staticmethod
@@ -824,8 +821,6 @@ class NormalizeIntensity(Transform):
 
         if self.nonzero:
             slices = img != 0
-        elif self.non_min:
-            slices = img != img.min()
         else:
             if isinstance(img, np.ndarray):
                 slices = np.ones_like(img, dtype=bool)
@@ -849,7 +844,7 @@ class NormalizeIntensity(Transform):
             _div[_div == 0.0] = 1.0
 
         img[slices] = (img[slices] - _sub) / _div
-        if self.nonzero and self.set_zero_to_min or self.non_min:
+        if self.set_zero_to_min:
             img[~slices] = img[slices].min()
         return img
 
