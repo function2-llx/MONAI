@@ -837,6 +837,8 @@ class AdjustContrast(Transform):
         img_min = img.min()
         img_range = img.max() - img_min
         ret: NdarrayOrTensor = ((img - img_min) / float(img_range + epsilon)) ** self.gamma * img_range + img_min
+        if self.invert:
+            ret = -ret
         return ret
 
 
@@ -892,7 +894,7 @@ class RandAdjustContrast(RandomizableTransform):
 
         if self.gamma_value is None:
             raise RuntimeError("gamma_value is not set, please call `randomize` function first.")
-        return AdjustContrast(self.gamma_value)(img)
+        return AdjustContrast(self.gamma_value, self.invert)(img)
 
 
 class ScaleIntensityRangePercentiles(Transform):
@@ -1243,12 +1245,14 @@ class RandGaussianSmooth(RandomizableTransform):
         sigma_z: tuple[float, float] = (0.25, 1.5),
         prob: float = 0.1,
         approx: str = "erf",
+        isotropic_prob: float = 1.,
     ) -> None:
         RandomizableTransform.__init__(self, prob)
         self.sigma_x = sigma_x
         self.sigma_y = sigma_y
         self.sigma_z = sigma_z
         self.approx = approx
+        self.isotropic_prob = isotropic_prob
 
         self.x = self.sigma_x[0]
         self.y = self.sigma_y[0]
@@ -1259,8 +1263,12 @@ class RandGaussianSmooth(RandomizableTransform):
         if not self._do_transform:
             return None
         self.x = self.R.uniform(low=self.sigma_x[0], high=self.sigma_x[1])
-        self.y = self.R.uniform(low=self.sigma_y[0], high=self.sigma_y[1])
-        self.z = self.R.uniform(low=self.sigma_z[0], high=self.sigma_z[1])
+        if self.R.uniform() < self.isotropic_prob:
+            self.y = self.x
+            self.z = self.x
+        else:
+            self.y = self.R.uniform(low=self.sigma_y[0], high=self.sigma_y[1])
+            self.z = self.R.uniform(low=self.sigma_z[0], high=self.sigma_z[1])
 
     def __call__(self, img: NdarrayOrTensor, randomize: bool = True) -> NdarrayOrTensor:
         img = convert_to_tensor(img, track_meta=get_track_meta())
