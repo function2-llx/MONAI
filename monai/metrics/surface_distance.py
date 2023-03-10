@@ -55,6 +55,7 @@ class SurfaceDistanceMetric(CumulativeIterationMetric):
         distance_metric: str = "euclidean",
         reduction: MetricReduction | str = MetricReduction.MEAN,
         get_not_nans: bool = False,
+        no_inf: bool = False,
     ) -> None:
         super().__init__()
         self.include_background = include_background
@@ -62,6 +63,7 @@ class SurfaceDistanceMetric(CumulativeIterationMetric):
         self.symmetric = symmetric
         self.reduction = reduction
         self.get_not_nans = get_not_nans
+        self.no_inf = no_inf
 
     def _compute_tensor(self, y_pred: torch.Tensor, y: torch.Tensor) -> torch.Tensor:  # type: ignore[override]
         """
@@ -84,6 +86,7 @@ class SurfaceDistanceMetric(CumulativeIterationMetric):
             include_background=self.include_background,
             symmetric=self.symmetric,
             distance_metric=self.distance_metric,
+            no_inf=self.no_inf,
         )
 
     def aggregate(
@@ -113,6 +116,7 @@ def compute_average_surface_distance(
     include_background: bool = False,
     symmetric: bool = False,
     distance_metric: str = "euclidean",
+    no_inf: bool = False,
 ) -> torch.Tensor:
     """
     This function is used to compute the Average Surface Distance from `y_pred` to `y`
@@ -155,7 +159,10 @@ def compute_average_surface_distance(
             continue
         if not np.any(edges_pred):
             warnings.warn(f"the prediction of class {c} is all 0, this may result in nan/inf distance.")
-            asd[b, c] = np.inf
+            if no_inf and distance_metric == 'euclidean':
+                asd[b, c] = np.linalg.norm(y_pred.shape[2:])
+            else:
+                asd[b, c] = np.inf
             continue
         surface_distance = get_surface_distance(edges_pred, edges_gt, distance_metric=distance_metric)
         if symmetric:
