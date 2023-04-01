@@ -100,6 +100,7 @@ class Pad(InvertibleTransform, LazyTransform):
             requires pytorch >= 1.10 for best compatibility.
         kwargs: other arguments for the `np.pad` or `torch.pad` function.
             note that `np.pad` treats channel dimension as the first dimension.
+        pad_min: pad the minimum value of the channel
 
     """
 
@@ -148,12 +149,18 @@ class Pad(InvertibleTransform, LazyTransform):
             to_pad_ = self.compute_pad_width(spatial_shape)
         mode_ = self.mode if mode is None else mode
         kwargs_ = dict(self.kwargs)
-        if self.pad_min and 'value' not in kwargs_:
-            kwargs_['value'] = img.min().item()
+        if self.pad_min:
+            assert mode_ == PytorchPadMode.CONSTANT
+            assert kwargs_.get('value', 0) == 0
+            min_v = img.amin(dim=tuple(range(1, img.ndim)), keepdim=True)
+            img -= min_v
         kwargs_.update(kwargs)
 
         img_t = convert_to_tensor(data=img, track_meta=get_track_meta())
-        return pad_func(img_t, to_pad_, self.get_transform_info(), mode_, **kwargs_)
+        ret = pad_func(img_t, to_pad_, self.get_transform_info(), mode_, **kwargs_)
+        if self.pad_min:
+            ret += min_v
+        return ret
 
     def inverse(self, data: MetaTensor) -> MetaTensor:
         transform = self.pop_transform(data)
