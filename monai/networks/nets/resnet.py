@@ -36,7 +36,7 @@ __all__ = [
     "resnet200",
 ]
 
-from monai.umei import Backbone, BackboneOutput
+from monai.luolib import Backbone, BackboneOutput
 
 
 def get_inplanes():
