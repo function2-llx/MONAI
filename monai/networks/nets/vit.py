@@ -21,7 +21,7 @@ from monai.networks.blocks.transformerblock import TransformerBlock
 
 __all__ = ["ViT"]
 
-from monai.umei import Backbone, BackboneOutput
+from monai.luolib import Backbone, BackboneOutput
 
 class ViT(Backbone):
     """
