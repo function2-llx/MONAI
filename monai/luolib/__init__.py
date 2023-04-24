@@ -14,7 +14,6 @@ class BackboneOutput:
     cls_feature: torch.Tensor = field(default=None)
     feature_maps: list[torch.Tensor] = field(default_factory=list)
 
-
 class Decoder(nn.Module):
     def forward(self, backbone_feature_maps: list[torch.Tensor], x_in: torch.Tensor) -> DecoderOutput:
         raise not NotImplementedError
