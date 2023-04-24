@@ -837,7 +837,7 @@ class Lambda(InvertibleTransform):
             raise TypeError(f"func must be None or callable but is {type(func).__name__}.")
         self.func = func
         self.inv_func = inv_func
-        # self.track_meta = track_meta
+        self.track_meta = track_meta
 
     def __call__(self, img: NdarrayOrTensor, func: Callable | None = None):
         """
