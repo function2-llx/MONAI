@@ -16,7 +16,6 @@ from itertools import chain
 
 import numpy as np
 import torch
-from tqdm import tqdm
 
 from monai.config import KeysCollection
 from monai.data.dataloader import DataLoader
@@ -149,16 +148,14 @@ class DatasetSummary:
         voxel_square_sum = torch.as_tensor(0.0)
         voxel_max, voxel_min = [], []
         voxel_ct = 0
-        self.max_size = np.array([0, 0, 0])
 
-        for data in tqdm(self.data_loader, ncols=80, desc='calculating statistics'):
+        for data in self.data_loader:
             if self.image_key and self.label_key:
                 image, label = data[self.image_key], data[self.label_key]
             else:
                 image, label = data
             image, *_ = convert_data_type(data=image, output_type=torch.Tensor)
             label, *_ = convert_data_type(data=label, output_type=torch.Tensor)
-            self.max_size = np.maximum(self.max_size, image.shape[1:])
 
             image_foreground = image[torch.where(label > foreground_threshold)]
 
@@ -170,7 +167,7 @@ class DatasetSummary:
 
         self.data_max, self.data_min = max(voxel_max), min(voxel_min)
         self.data_mean = (voxel_sum / voxel_ct).item()
-        self.data_std = (torch.sqrt(voxel_square_sum / voxel_ct - self.data_mean ** 2)).item()
+        self.data_std = (torch.sqrt(voxel_square_sum / voxel_ct - self.data_mean**2)).item()
 
     def calculate_percentiles(
         self,
