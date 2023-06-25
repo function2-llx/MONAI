@@ -11,8 +11,6 @@
 
 from __future__ import annotations
 
-import glob
-import os
 import warnings
 from abc import ABC, abstractmethod
 from collections.abc import Callable, Iterable, Iterator, Sequence
@@ -31,6 +29,7 @@ from monai.data.utils import (
     is_supported_format,
     orientation_ras_lps,
 )
+from monai.transforms.utils_pytorch_numpy_unification import allclose
 from monai.utils import MetaKeys, SpaceKeys, TraceKeys, deprecated_arg, ensure_tuple, optional_import, require_pkg
 
 if TYPE_CHECKING:
@@ -466,8 +465,8 @@ class PydicomReader(ImageReader):
             name = f"{name}"
             if Path(name).is_dir():
                 # read DICOM series
-                series_slcs = glob.glob(os.path.join(name, "*"))
-                series_slcs = [slc for slc in series_slcs if "LICENSE" not in slc]
+                series_slcs = Path(name).glob('*.dcm')
+                series_slcs = [slc for slc in series_slcs if "LICENSE" not in slc.name]
                 slices = [pydicom.dcmread(fp=slc, **kwargs_) for slc in series_slcs]
                 img_.append(slices if len(slices) > 1 else slices[0])
                 if len(slices) > 1:
