@@ -55,6 +55,7 @@ def execute_compose(
     overrides: dict | None = None,
     threading: bool = False,
     log_stats: bool | str = False,
+    apply_pendding: bool = True,
 ) -> NdarrayOrTensor | Sequence[NdarrayOrTensor] | Mapping[Any, NdarrayOrTensor]:
     """
     ``execute_compose`` provides the implementation that the ``Compose`` class uses to execute a sequence
@@ -111,7 +112,8 @@ def execute_compose(
         data = apply_transform(
             _transform, data, map_items, unpack_items, lazy=lazy, overrides=overrides, log_stats=log_stats
         )
-    data = apply_pending_transforms(data, None, overrides, logger_name=log_stats)
+    if apply_pendding:
+        data = apply_pending_transforms(data, None, overrides, logger_name=log_stats)
     return data
 
 
@@ -232,6 +234,7 @@ class Compose(Randomizable, InvertibleTransform):
         log_stats: bool | str = False,
         lazy: bool | None = False,
         overrides: dict | None = None,
+        apply_pending: bool = True,
     ) -> None:
         if transforms is None:
             transforms = []
@@ -242,6 +245,7 @@ class Compose(Randomizable, InvertibleTransform):
         self.set_random_state(seed=get_seed())
         self.lazy = lazy
         self.overrides = overrides
+        self.apply_pending = apply_pending
 
     def set_random_state(self, seed: int | None = None, state: np.random.RandomState | None = None) -> Compose:
         super().set_random_state(seed=seed, state=state)
@@ -330,6 +334,7 @@ class Compose(Randomizable, InvertibleTransform):
             overrides=self.overrides,
             threading=threading,
             log_stats=self.log_stats,
+            apply_pendding=self.apply_pending,
         )
 
         return result
