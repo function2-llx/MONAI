@@ -2119,7 +2119,7 @@ class Resample(Transform):
                 for i, dim in enumerate(img_t.shape[sr + 1 : 0 : -1]):
                     grid_t[0, ..., i] *= 2.0 / max(2, dim)
             if _padding_mode == GridSamplePadMode.ZEROS and self.shift_min:
-                min_v = img_t.min()
+                min_v = img_t.amin(dim=tuple(range(1, img_t.ndim)), keepdim=True)
                 img_t -= min_v
             out = torch.nn.functional.grid_sample(
                 img_t.unsqueeze(0),
