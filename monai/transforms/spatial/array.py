@@ -135,7 +135,7 @@ class SpatialResample(InvertibleTransform, LazyTransform):
     def __init__(
         self,
         mode: str | int = GridSampleMode.BILINEAR,
-        padding_mode: str = GridSamplePadMode.BORDER,
+        padding_mode: str = GridSamplePadMode.ZEROS,
         align_corners: bool = False,
         dtype: DtypeLike = np.float64,
         lazy: bool = False,
