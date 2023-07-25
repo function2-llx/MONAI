@@ -2525,7 +2525,7 @@ class RandAffine(RandomizableTransform, InvertibleTransform, LazyTransform):
         if lazy_:
             if self._do_transform:
                 if grid is None:
-                    self.rand_affine_grid(sp_size, randomize=randomize, lazy=True)
+                    self.rand_affine_grid(sp_size, randomize=False, lazy=True)
                 affine = self.rand_affine_grid.get_transformation_matrix()
             else:
                 affine = convert_to_dst_type(torch.eye(len(sp_size) + 1), img, dtype=self.rand_affine_grid.dtype)[0]
@@ -2533,7 +2533,7 @@ class RandAffine(RandomizableTransform, InvertibleTransform, LazyTransform):
             if grid is None:
                 grid = self.get_identity_grid(sp_size, lazy_)
                 if self._do_transform:
-                    grid = self.rand_affine_grid(grid=grid, randomize=randomize, lazy=lazy_)
+                    grid = self.rand_affine_grid(grid=grid, randomize=False, lazy=lazy_)
             affine = self.rand_affine_grid.get_transformation_matrix()
         return affine_func(  # type: ignore
             img,
