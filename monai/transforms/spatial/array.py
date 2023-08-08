@@ -1803,6 +1803,7 @@ class RandAffineGrid(Randomizable, LazyTransform):
         shear_range: RandRange = None,
         translate_range: RandRange = None,
         scale_range: RandRange = None,
+        isotropic_scale: bool = False,
         scale_prob: float = 1.,
         device: torch.device | None = None,
         dtype: DtypeLike = np.float32,
@@ -1851,6 +1852,7 @@ class RandAffineGrid(Randomizable, LazyTransform):
         self.shear_range = ensure_tuple(shear_range)
         self.translate_range = ensure_tuple(translate_range)
         self.scale_range = ensure_tuple(scale_range)
+        self.isotropic_scale = isotropic_scale
         self.scale_prob = scale_prob
 
         self.rotate_params: list[float] | None = None
@@ -1862,7 +1864,7 @@ class RandAffineGrid(Randomizable, LazyTransform):
         self.dtype = dtype
         self.affine: torch.Tensor | None = torch.eye(4, dtype=torch.float64)
 
-    def _get_rand_param(self, param_range, add_scalar: float = 0.0, prob: float = 1.):
+    def _get_rand_param(self, param_range, add_scalar: float = 0.0, prob: float = 1., isotropic: bool = False):
         if self.R.uniform() >= prob:
             return None
 
@@ -1874,6 +1876,9 @@ class RandAffineGrid(Randomizable, LazyTransform):
                 out_param.append(self.R.uniform(f[0], f[1]) + add_scalar)
             elif f is not None:
                 out_param.append(self.R.uniform(-f, f) + add_scalar)
+        if isotropic:
+            for i in range(1, len(out_param)):
+                out_param[i] = out_param[0]
         return out_param
 
     def randomize(self, data: Any | None = None) -> None:
@@ -2353,6 +2358,7 @@ class RandAffine(RandomizableTransform, InvertibleTransform, LazyTransform):
         shear_range: RandRange = None,
         translate_range: RandRange = None,
         scale_range: RandRange = None,
+        isotropic_scale: bool = False,
         scale_prob: float = 1.,
         spatial_size: Sequence[int] | int | None = None,
         mode: str | int = GridSampleMode.BILINEAR,
@@ -2425,6 +2431,7 @@ class RandAffine(RandomizableTransform, InvertibleTransform, LazyTransform):
             shear_range=shear_range,
             translate_range=translate_range,
             scale_range=scale_range,
+            isotropic_scale=isotropic_scale,
             scale_prob=scale_prob,
             device=device,
             lazy=lazy,
