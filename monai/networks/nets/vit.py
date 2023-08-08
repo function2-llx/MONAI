@@ -21,9 +21,7 @@ from monai.networks.blocks.transformerblock import TransformerBlock
 
 __all__ = ["ViT"]
 
-from monai.luolib import Backbone, BackboneOutput
-
-class ViT(Backbone):
+class ViT(nn.Module):
     """
     Vision Transformer (ViT), based on: "Dosovitskiy et al.,
     An Image is Worth 16x16 Words: Transformers for Image Recognition at Scale <https://arxiv.org/abs/2010.11929>"
@@ -117,7 +115,7 @@ class ViT(Backbone):
             else:
                 self.classification_head = nn.Linear(hidden_size, num_classes)  # type: ignore
 
-    def forward(self, x: torch.FloatTensor) -> BackboneOutput:
+    def forward(self, x: torch.FloatTensor):
         x = self.patch_embedding(x)
         cls_token = self.cls_token.expand(x.shape[0], -1, -1)
         x = torch.cat((cls_token, x), dim=1)
@@ -125,8 +123,8 @@ class ViT(Backbone):
         for blk in self.blocks:
             x = blk(x)
             hidden_states_out.append(x)
-        x = self.norm(x)
         if self.classification_head is not None:
+            x = self.norm(x)
             x = self.classification_head(x[:, 0])
-        # TODO: output feature maps (i.e., hidden features of each layer)
-        return BackboneOutput(x[:, 0], hidden_states_out)
+            return x
+        return hidden_states_out
