@@ -1885,7 +1885,7 @@ class RandAffineGrid(Randomizable, LazyTransform):
         self.rotate_params = self._get_rand_param(self.rotate_range, prob=self.rotate_prob)
         self.shear_params = self._get_rand_param(self.shear_range)
         self.translate_params = self._get_rand_param(self.translate_range)
-        self.scale_params = self._get_rand_param(self.scale_range, 1.0, self.scale_prob)
+        self.scale_params = self._get_rand_param(self.scale_range, 1.0, self.scale_prob, self.isotropic_scale)
 
     def __call__(
         self,

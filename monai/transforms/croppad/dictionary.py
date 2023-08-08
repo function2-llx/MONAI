@@ -1166,6 +1166,8 @@ class RandCropByLabelClassesd(Randomizable, MapTransform, LazyTransform, MultiSa
         for key in self.key_iterator(d):
             for i, im in enumerate(self.cropper(d[key], randomize=False, lazy=lazy_)):
                 ret[i][key] = im
+        if len(ret) == 1:
+            ret = ret[0]
         return ret
 
 

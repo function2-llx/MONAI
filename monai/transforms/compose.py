@@ -117,7 +117,7 @@ def execute_compose(
     return data
 
 
-class Compose(Randomizable, InvertibleTransform):
+class Compose(Randomizable, InvertibleTransform, LazyTransform):
     """
     ``Compose`` provides the ability to chain a series of callables together in
     a sequential manner. Each transform in the sequence must take a single
@@ -330,7 +330,7 @@ class Compose(Randomizable, InvertibleTransform):
             end=end,
             map_items=self.map_items,
             unpack_items=self.unpack_items,
-            lazy=self.lazy,
+            lazy=self.lazy if lazy is None else lazy,
             overrides=self.overrides,
             threading=threading,
             log_stats=self.log_stats,
@@ -411,6 +411,7 @@ class OneOf(Compose):
         log_stats: bool | str = False,
         lazy: bool | None = False,
         overrides: dict | None = None,
+        apply_pending: bool = True,
     ) -> None:
         super().__init__(transforms, map_items, unpack_items, log_stats, lazy, overrides)
         if len(self.transforms) == 0:
@@ -424,6 +425,7 @@ class OneOf(Compose):
             )
         self.weights = ensure_tuple(self._normalize_probabilities(weights))
         self.log_stats = log_stats
+        self.apply_pending = apply_pending
 
     def _normalize_probabilities(self, weights):
         if len(weights) == 0:
@@ -452,7 +454,7 @@ class OneOf(Compose):
                 weights.append(w)
         return OneOf(transforms, weights, self.map_items, self.unpack_items)
 
-    def __call__(self, data, start=0, end=None, threading=False, lazy: str | bool | None = None):
+    def __call__(self, data, start=0, end=None, threading=False, lazy: bool | None = None):
         if start != 0:
             raise ValueError(f"OneOf requires 'start' parameter to be 0 (start set to {start})")
         if end is not None:
@@ -471,10 +473,11 @@ class OneOf(Compose):
             end=end,
             map_items=self.map_items,
             unpack_items=self.unpack_items,
-            lazy=self.lazy,
+            lazy=self.lazy if lazy is None else lazy,
             overrides=self.overrides,
             threading=threading,
             log_stats=self.log_stats,
+            apply_pendding=self.apply_pending,
         )
 
         # if the data is a mapping (dictionary), append the OneOf transform to the end
