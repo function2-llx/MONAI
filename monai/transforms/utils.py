@@ -1722,7 +1722,10 @@ def convert_to_contiguous(
     elif isinstance(data, Mapping):
         return {k: convert_to_contiguous(v, **kwargs) for k, v in data.items()}
     elif isinstance(data, Sequence) and not isinstance(data, bytes):
-        return [convert_to_contiguous(i, **kwargs) for i in data]  # type: ignore
+        ret = [convert_to_contiguous(i, **kwargs) for i in data]  # type: ignore
+        if isinstance(data, tuple):
+            ret = tuple(ret)
+        return ret
     else:
         return data
 

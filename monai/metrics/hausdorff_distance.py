@@ -69,6 +69,7 @@ class HausdorffDistanceMetric(CumulativeIterationMetric):
         directed: bool = False,
         reduction: MetricReduction | str = MetricReduction.MEAN,
         get_not_nans: bool = False,
+        set_nan: bool = False,
     ) -> None:
         super().__init__()
         self.include_background = include_background
@@ -77,6 +78,7 @@ class HausdorffDistanceMetric(CumulativeIterationMetric):
         self.directed = directed
         self.reduction = reduction
         self.get_not_nans = get_not_nans
+        self.set_nan = set_nan
 
     def _compute_tensor(self, y_pred: torch.Tensor, y: torch.Tensor, **kwargs: Any) -> torch.Tensor:  # type: ignore[override]
         """
@@ -113,6 +115,7 @@ class HausdorffDistanceMetric(CumulativeIterationMetric):
             percentile=self.percentile,
             directed=self.directed,
             spacing=kwargs.get("spacing"),
+            set_nan=self.set_nan,
         )
 
     def aggregate(
@@ -144,6 +147,7 @@ def compute_hausdorff_distance(
     percentile: float | None = None,
     directed: bool = False,
     spacing: int | float | np.ndarray | Sequence[int | float | np.ndarray | Sequence[int | float]] | None = None,
+    set_nan: bool = False,
 ) -> torch.Tensor:
     """
     Compute the Hausdorff distance.
@@ -189,8 +193,14 @@ def compute_hausdorff_distance(
         (edges_pred, edges_gt) = get_mask_edges(y_pred[b, c], y[b, c])
         if not np.any(edges_gt):
             warnings.warn(f"the ground truth of class {c} is all 0, this may result in nan/inf distance.")
+            if set_nan:
+                hd[b, c] = torch.nan
+                continue
         if not np.any(edges_pred):
             warnings.warn(f"the prediction of class {c} is all 0, this may result in nan/inf distance.")
+            if set_nan:
+                hd[b, c] = torch.nan
+                continue
 
         distance_1 = compute_percent_hausdorff_distance(
             edges_pred, edges_gt, distance_metric, percentile, spacing_list[b]

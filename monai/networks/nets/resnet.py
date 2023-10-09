@@ -307,8 +307,8 @@ class ResNet(Backbone):
 
         return nn.Sequential(*layers)
 
-    def forward(self, x: torch.Tensor) -> BackboneOutput:
-        out = BackboneOutput()
+    def forward(self, x: torch.Tensor):
+        ret = []
         x = self.conv1(x)
         x = self.bn1(x)
         x = self.relu(x)
@@ -317,27 +317,21 @@ class ResNet(Backbone):
         out.feature_maps.append(x)
 
         x = self.layer1(x)
-        out.feature_maps.append(x)
+        ret.append(x)
         x = self.layer2(x)
-        out.feature_maps.append(x)
+        ret.append(x)
         x = self.layer3(x)
-        out.feature_maps.append(x)
+        ret.append(x)
         x = self.layer4(x)
-        out.feature_maps.append(x)
+        ret.append(x)
 
-        x = self.avgpool(x)
-
-        x = x.view(x.size(0), -1)
-        out.cls_feature = x
         if self.fc is not None:
+            x = self.avgpool(x)
+            x = x.view(x.size(0), -1)
             x = self.fc(x)
+            return x
 
-        return out
-
-    @property
-    def cls_feature_size(self) -> int:
-        return self._cls_feature_size
-
+        return ret
 
 def _resnet(
     arch: str,

@@ -22,7 +22,6 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.utils.checkpoint as checkpoint
 
-from monai.luolib import Backbone, BackboneOutput, Decoder, DecoderOutput
 from monai.networks.blocks import MLPBlock as Mlp, PatchEmbed, UnetOutBlock, UnetrBasicBlock, UnetrUpBlock
 from monai.networks.layers import DropPath, trunc_normal_, Pool
 from monai.utils import ensure_tuple_rep, look_up_option, optional_import
@@ -1064,14 +1063,14 @@ class SwinTransformer(Backbone):
             x3 = self.layers4c[0](x3.contiguous())
         x4 = self.layers4[0](x3.contiguous())
         x4_out = self.proj_out(x4, normalize)
-        return BackboneOutput(self.avg_pool(x4_out).view(x4_out.shape[:2]), [x0_out, x1_out, x2_out, x3_out, x4_out])
+        return [x0_out, x1_out, x2_out, x3_out, x4_out]
 
-class SwinUnetrDecoder(Decoder):
+class SwinUnetrDecoder(nn.Module):
     def __init__(
         self,
         in_channels: int,
         feature_size: int = 24,
-        norm_name: Union[Tuple, str] = "instance",
+        norm_name: tuple | str = "instance",
         spatial_dims: int = 3,
         use_encoder5: bool = False,
     ) -> None:
